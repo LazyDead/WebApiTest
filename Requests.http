@@ -1,0 +1,14 @@
+@HostAddress = https://localhost:7083
+
+GET {{HostAddress}}/api/GetClientsByBirthDate?BirthDate=2000.02.17
+Accept: application/json
+
+###
+
+GET {{HostAddress}}/api/GetBuysPerCategory?ClientID=2
+Accept: application/json
+
+###
+
+GET {{HostAddress}}/api/GetLastBuyers?DayRange=25
+Accept: application/json
