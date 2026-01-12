@@ -6,11 +6,11 @@ using WebApi.Application.Repositories;
 
 namespace WebApi.Infrastructure.Repositories;
 
-public class SqLiteStatisticRepository : IStatisticRepository
+public class AdoNetStatisticRepository : IStatisticRepository
 {
     private readonly string _connectionString;
 
-    public SqLiteStatisticRepository(string connectionString) => _connectionString = connectionString;
+    public AdoNetStatisticRepository(string connectionString) => _connectionString = connectionString;
 
     public async Task<List<ClientDto>> GetClientsByBirthDate(DateTime birthDate)
     {

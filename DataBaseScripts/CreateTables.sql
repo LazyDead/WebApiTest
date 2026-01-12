@@ -22,7 +22,7 @@ CREATE TABLE main.Orders
 (
     Id         INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     ClientId   INT,
-    PlaceDate  DATE                              NOT NULL,
+    PlaceDate  DATETIME                          NOT NULL,
     TotalValue DECIMAL(15, 2)                    NOT NULL,
     CONSTRAINT FK_Orders_Clients FOREIGN KEY (ClientId) REFERENCES Clients (Id)
 );

@@ -5,7 +5,7 @@ Accept: application/json
 
 ###
 
-GET {{HostAddress}}/api/clients/5/categories
+GET {{HostAddress}}/api/clients/4/categories
 Accept: application/json
 
 ###

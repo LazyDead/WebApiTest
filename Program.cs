@@ -1,16 +1,34 @@
+using Microsoft.EntityFrameworkCore;
 using WebApi.Application.Repositories;
 using WebApi.Application.Services;
 using WebApi.Infrastructure.Repositories;
-using WebApi.Infrastructure.SQLIte;
+
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
-builder.Services.AddTransient<StatisticService>();
-builder.Services.AddTransient<IStatisticRepository,SqLiteStatisticRepository>(sp=>{
-    var cfg = sp.GetRequiredService<IConfiguration>();
-    var connectOptions = cfg.GetSection("DataBase")["ConnectionString"];
-    return new SqLiteStatisticRepository(connectOptions);
-});
+builder.Services.AddScoped<StatisticService>();
+
+bool useEf = builder.Configuration.GetValue<bool>("UseEf");
+
+string? connectionString = builder.Configuration.GetConnectionString("Default");
+
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "Connection string 'Default' is not configured."
+    );
+}
+
+if (useEf)
+{
+    builder.Services.AddDbContext<WebApi.Infrastructure.Persistence.AppDbContext>(opt =>
+        opt.UseSqlite(connectionString));
+
+    builder.Services.AddScoped<IStatisticRepository, EntityFrameworkStatisticRepository>();
+}
+else
+    builder.Services.AddScoped<IStatisticRepository>(sp => { return new AdoNetStatisticRepository(connectionString); });
+
 var app = builder.Build();
 
 app.UseHttpsRedirection();
