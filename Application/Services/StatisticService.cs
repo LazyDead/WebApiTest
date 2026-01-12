@@ -10,23 +10,18 @@ public class StatisticService
     public StatisticService(IStatisticRepository statisticRepository) =>
         _statisticRepository = statisticRepository;
 
-    public bool TryGetClientsByBirthDate(DateOnly birthDate, out List<Client> clients)
+    public async Task<List<Client>> GetClientsByBirthDate(DateTime birthDate)
     {
-        clients = _statisticRepository.GetClientsByBirthDate(birthDate).Result;
-        return clients.Count > 0;
+        List<Client> clients = await _statisticRepository.GetClientsByBirthDate(birthDate);
+        return clients;
     }
 
-    public bool TryGetLastBuys(int dayRange, out List<ClientLastBuy> clientLastBuys)
+    public async Task<List<ClientLastBuy>> GetLastBuys(int dayRange)
     {
-        List<Order> lastOrders = _statisticRepository.GetOrdersInDayRange(dayRange).Result;
-        clientLastBuys = new();
-        if (lastOrders.Count == 0)
-        {
-            clientLastBuys = new();
-            return false;
-        }
+        List<Order> lastOrders = await _statisticRepository.GetOrdersInDayRange(dayRange);
+        List<ClientLastBuy> clientLastBuys = new();
 
-        for(int i = 0; i < lastOrders.Count; i++)
+        for (int i = 0; i < lastOrders.Count; i++)
         {
             if (clientLastBuys.FindIndex(o => o.Client.Id == lastOrders[i].Client.Id) == -1)
             {
@@ -38,20 +33,19 @@ public class StatisticService
                 continue;
             }
 
-            int index = clientLastBuys.FindIndex(o => o.Client.Id == lastOrders[i].Client.Id && o.LastBuyDate < lastOrders[i].PlaceDate);
+            int index = clientLastBuys.FindIndex(o =>
+                o.Client.Id == lastOrders[i].Client.Id && o.LastBuyDate < lastOrders[i].PlaceDate);
             if (index > -1)
                 lastOrders[index].PlaceDate = lastOrders[i].PlaceDate;
         }
 
-        return true;
+        return clientLastBuys;
     }
 
-    public bool TryGetBuysPerCategory(int clientId, out List<PurchaseCountPerCategory> clientBuysPerCategory)
+    public async Task<List<PurchaseCountPerCategory>> GetBuysPerCategory(int clientId)
     {
-        clientBuysPerCategory =
-            _statisticRepository.GetPurchaseCountPerCategoryByClientId(clientId).Result;
-        if (clientBuysPerCategory.Count == 0)
-            return false;
-        return true;
+        List<PurchaseCountPerCategory> clientBuysPerCategory =
+            await _statisticRepository.GetPurchaseCountPerCategoryByClientId(clientId);
+        return clientBuysPerCategory;
     }
 }

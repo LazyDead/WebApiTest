@@ -15,28 +15,22 @@ public class MainController : ControllerBase
     {
         _statisticService = statisticService;
     }
-    [HttpGet("GetClientsByBirthDate")]
-    public IActionResult GetClientsByBirthDate([FromQuery(Name = "BirthDate")] DateOnly birthDate)
+    [HttpGet("clients")]
+    public async Task<IActionResult> GetClientsByBirthDate([FromQuery(Name = "birthday")]DateTime birthDate)
     {
-        List<Client> clients;
-        if(!_statisticService.TryGetClientsByBirthDate(birthDate,out clients))
-            return NotFound();
+        List<Client> clients = await _statisticService.GetClientsByBirthDate(birthDate);
         return Ok(StatisticMapper.ConvertToDto(clients));
     }
-    [HttpGet("GetLastBuyers")]
-    public IActionResult GetLastBuyers([FromQuery(Name = "DayRange")] int dayRange)
+    [HttpGet("orders/recent")]
+    public async Task<IActionResult> GetLastBuyers([FromQuery(Name = "days")] int dayRange)
     {
-        List<ClientLastBuy> clientsLastBuy;
-        if(!_statisticService.TryGetLastBuys(dayRange,out clientsLastBuy))
-            return NotFound();
+        List<ClientLastBuy> clientsLastBuy = await _statisticService.GetLastBuys(dayRange);
         return Ok(StatisticMapper.ConvertToDto(clientsLastBuy));
     }
-    [HttpGet("GetBuysPerCategory")]
-    public IActionResult GetBuysPerCategory([FromQuery(Name = "ClientID")] int clientID)
+    [HttpGet("clients/{clientId}/categories")]
+    public async Task<IActionResult> GetBuysPerCategory(int clientId)
     {
-        List<PurchaseCountPerCategory> purchaseCountPerCategory;
-        if(!_statisticService.TryGetBuysPerCategory(clientID,out purchaseCountPerCategory))
-            return NotFound();
+        List<PurchaseCountPerCategory> purchaseCountPerCategory = await _statisticService.GetBuysPerCategory(clientId);
         return Ok(StatisticMapper.ConvertToDto(purchaseCountPerCategory));
     }
 }

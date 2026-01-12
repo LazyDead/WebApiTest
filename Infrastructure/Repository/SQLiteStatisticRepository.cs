@@ -1,4 +1,5 @@
 using System.Data;
+using Microsoft.Data.Sqlite;
 using WebApi.Application.Models;
 using WebApi.Application.Repository;
 using WebApi.Infrastructure.SQLIte;
@@ -13,11 +14,20 @@ public class SQLiteStatisticRepository : IStatisticRepository
     public SQLiteStatisticRepository(SQLiteService sqLiteService) =>
         _sqLiteService = sqLiteService;
 
-    public async Task<List<Client>> GetClientsByBirthDate(DateOnly birthDate)
+    public async Task<List<Client>> GetClientsByBirthDate(DateTime birthDate)
     {
         List<Client> clients = new List<Client>();
-        string command = $"SELECT Id,FullName FROM Clients WHERE BirthDate = '{birthDate.ToString("yyyy-MM-dd")}';";
-        var dataTable = await _sqLiteService.GetDataTableAsync(command);
+        string command = "SELECT Id,FullName " +
+                         "FROM Clients " +
+                         "WHERE " +
+                         "strftime('%d', BirthDate) == @birthDay AND " +
+                         "strftime('%m', BirthDate) == @birthMonth";
+        var parameters = new[]
+        {
+            new SqliteParameter("@birthDay", birthDate.ToString("dd")),
+            new SqliteParameter("@birthMonth", birthDate.ToString("MM"))
+        };
+        var dataTable = await _sqLiteService.GetDataTableAsync(command,parameters);
         if (dataTable.Rows.Count == 0)
             return clients;
         foreach (DataRow row in dataTable.Rows)
@@ -39,8 +49,12 @@ public class SQLiteStatisticRepository : IStatisticRepository
         string command = "SELECT Orders.Id,ClientId,Clients.FullName,PlaceDate " +
                          "FROM Orders  " +
                          "JOIN Clients ON Clients.Id = ClientId " +
-                         $"WHERE PlaceDate  >= '{CutOffDate.ToString("yyyy-MM-dd")}'";
-        var dataTable = await _sqLiteService.GetDataTableAsync(command);
+                         "WHERE PlaceDate  >= @cutOffDate";
+        var parameters = new[]
+        {
+            new SqliteParameter("@cutOffDate", CutOffDate.ToString("yyyy-MM-dd"))
+        };
+        var dataTable = await _sqLiteService.GetDataTableAsync(command,parameters);
         if (dataTable.Rows.Count == 0)
             return orders;
         foreach (DataRow row in dataTable.Rows)
@@ -63,35 +77,27 @@ public class SQLiteStatisticRepository : IStatisticRepository
     public async Task<List<PurchaseCountPerCategory>> GetPurchaseCountPerCategoryByClientId(int clientId)
     {
         List<PurchaseCountPerCategory> purchaseCountPerCategory = new();
-        string command = $"SELECT Id FROM Orders Where ClientId = {clientId} ";
-        var dataTable = await _sqLiteService.GetDataTableAsync(command);
-        if (dataTable.Rows.Count == 0)
-            return purchaseCountPerCategory;
-        string ordersString = "";
-        foreach (DataRow row in dataTable.Rows)
-            ordersString += $"{row["Id"]},";
-
-        command = "SELECT Products.Category, Quantity " +
-                  "FROM Orders_Positions " +
+        string command = "SELECT Category, SUM(Orders_Positions.Quantity) as 'Quantity'" +
+                  "FROM Orders " +
+                  "JOIN Orders_Positions ON Orders_Positions.OrderId = Orders.Id " +
                   "JOIN Products ON Products.Id = Orders_Positions.ProductId " +
-                  $"WHERE OrderId IN({ordersString.TrimEnd(',')}) ";
-        dataTable = await _sqLiteService.GetDataTableAsync(command);
+                  "WHERE Orders.ClientId == @clientId " +
+                  "GROUP BY Category";
+        var parameters = new[]
+        {
+            new SqliteParameter("@clientId", clientId)
+        };
+        DataTable dataTable = await _sqLiteService.GetDataTableAsync(command, parameters);
 
         foreach (DataRow row in dataTable.Rows)
         {
-            int index = purchaseCountPerCategory.FindIndex(o => o.Category == row["Category"].ToString());
-            if (index == -1)
+            purchaseCountPerCategory.Add(new()
             {
-                purchaseCountPerCategory.Add(new()
-                {
-                    Category = row["Category"].ToString() ?? "",
-                    PurchaseCount = Convert.ToInt32(row["Quantity"])
-                });
-            }
-            else
-                purchaseCountPerCategory[index].PurchaseCount += Convert.ToInt32(row["Quantity"]);
+                Category = row["Category"].ToString() ?? "",
+                PurchaseCount = Convert.ToInt32(row["Quantity"])
+            });
         }
-
+        
         return purchaseCountPerCategory;
     }
 }
