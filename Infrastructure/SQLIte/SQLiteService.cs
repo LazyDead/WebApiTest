@@ -4,11 +4,11 @@ using Microsoft.Data.Sqlite;
 
 namespace WebApi.Infrastructure.SQLIte;
 
-public class SQLiteService
+public class SqLiteService
 {
     private readonly string _connectionString;
 
-    public SQLiteService(string connectionString) => _connectionString = connectionString;
+    public SqLiteService(string connectionString) => _connectionString = connectionString;
 
     public async Task<DataTable> GetDataTableAsync(string query, IEnumerable<SqliteParameter>? parameters = null)
     {

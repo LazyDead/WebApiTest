@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using WebApi.Application.Mappers;
+using WebApi.API.DTO;
 using WebApi.Application.Services;
-using WebApi.Application.Models;
 
 namespace WebApi.Controllers;
 
@@ -10,27 +9,34 @@ namespace WebApi.Controllers;
 public class MainController : ControllerBase
 {
     private readonly StatisticService _statisticService;
-    
+
     public MainController(StatisticService statisticService)
     {
         _statisticService = statisticService;
     }
+
     [HttpGet("clients")]
-    public async Task<IActionResult> GetClientsByBirthDate([FromQuery(Name = "birthday")]DateTime birthDate)
+    public async Task<IActionResult> GetClientsByBirthDate([FromQuery(Name = "birthday")] DateTime birthDate)
     {
-        List<Client> clients = await _statisticService.GetClientsByBirthDate(birthDate);
-        return Ok(StatisticMapper.ConvertToDto(clients));
+        List<ClientDto> clients = await _statisticService.GetClientsByBirthDate(birthDate);
+        return Ok(clients);
     }
+
     [HttpGet("orders/recent")]
     public async Task<IActionResult> GetLastBuyers([FromQuery(Name = "days")] int dayRange)
     {
-        List<ClientLastBuy> clientsLastBuy = await _statisticService.GetLastBuys(dayRange);
-        return Ok(StatisticMapper.ConvertToDto(clientsLastBuy));
+        if (dayRange <= 0)
+            return BadRequest();
+        List<ClientLastBuyDto> clientsLastBuy = await _statisticService.GetLastBuyers(dayRange);
+        return Ok(clientsLastBuy);
     }
+
     [HttpGet("clients/{clientId}/categories")]
     public async Task<IActionResult> GetBuysPerCategory(int clientId)
     {
-        List<PurchaseCountPerCategory> purchaseCountPerCategory = await _statisticService.GetBuysPerCategory(clientId);
-        return Ok(StatisticMapper.ConvertToDto(purchaseCountPerCategory));
+        if (clientId <= 0)
+            return BadRequest();
+        List<CategoryBuysCountDto> buysPerCategory = await _statisticService.GetBuysPerCategory(clientId);
+        return Ok(buysPerCategory);
     }
 }

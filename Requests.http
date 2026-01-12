@@ -5,10 +5,10 @@ Accept: application/json
 
 ###
 
-GET {{HostAddress}}/api/clients/3/categories
+GET {{HostAddress}}/api/clients/5/categories
 Accept: application/json
 
 ###
 
-GET {{HostAddress}}/api/orders/recent?days=25
+GET {{HostAddress}}/api/orders/recent?days=15
 Accept: application/json
